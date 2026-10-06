@@ -181,14 +181,3 @@ dnn1/
 
 ---
 
-## 🌐 Deployment on Render
-
-This project is fully configured for zero-configuration deployment on **Render**:
-
-1. Push this repository to your GitHub account.
-2. In [Render Dashboard](https://dashboard.render.com), select **New +** > **Blueprint**.
-3. Connect your repository — Render will read [`render.yaml`](render.yaml) and automatically configure:
-   - **Runtime**: `Python 3.11.9`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 app:app`
-4. Click **Apply** to deploy!
