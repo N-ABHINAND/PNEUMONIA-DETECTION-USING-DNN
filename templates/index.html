@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pneumonia Risk Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav a {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            margin: 0 10px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .form-group input, .form-group select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        .hint {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: none;
+        }
+        .risk-meter {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+        }
+        .risk-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--meter-color) 0deg, var(--meter-color) calc(var(--risk-percent) * 3.6deg), #e2e8f0 calc(var(--risk-percent) * 3.6deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .risk-circle-inner {
+            width: 160px;
+            height: 160px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .risk-percentage {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--meter-color);
+        }
+        .result-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .detail-box {
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--meter-color);
+            background: #f8fafc;
+        }
+        .detail-box h3 {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        .detail-box p {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .advice-box {
+            padding: 25px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid var(--meter-color);
+        }
+        .advice-box h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Pneumonia Risk Detection System</h1>
+            <p>AI-Powered Deep Neural Network | Accuracy: 97%</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">🏠 Patient Prediction</a>
+            <a href="/analytics">📊 Dataset Analytics</a>
+        </div>
+
+        <div class="main-card">
+            <form id="predictionForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Age (years)</label>
+                        <input type="number" id="age" required min="0" max="120">
+                        <span class="hint">Patient's age</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Body Temperature (°C)</label>
+                        <input type="number" id="fever" step="0.1" required min="35" max="45">
+                        <span class="hint">Normal: 36.5-37.5°C</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Cough</label>
+                        <select id="cough" required>
+                            <option value="">Select...</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Shortness of Breath</label>
+                        <select id="shortness_of_breath" required>
+                            <option value="">Select...</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Heart Rate (bpm)</label>
+                        <input type="number" id="heart_rate" required min="40" max="200">
+                        <span class="hint">Normal: 60-100 bpm</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Respiratory Rate (breaths/min)</label>
+                        <input type="number" id="respiratory_rate" required min="8" max="40">
+                        <span class="hint">Normal: 12-20/min</span>
+                    </div>
+                    <div class="form-group">
+                        <label>SpO2 (%)</label>
+                        <input type="number" id="spo2" step="0.1" required min="70" max="100">
+                        <span class="hint">Normal: 95-100%</span>
+                    </div>
+                    <div class="form-group">
+                        <label>WBC Count (cells/μL)</label>
+                        <input type="number" id="wbc" required min="1000" max="50000">
+                        <span class="hint">Normal: 4,000-11,000</span>
+                    </div>
+                    <div class="form-group">
+                        <label>CRP (mg/L)</label>
+                        <input type="number" id="crp" step="0.1" required min="0" max="500">
+                        <span class="hint">Normal: &lt;10 mg/L</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Procalcitonin (ng/mL)</label>
+                        <input type="number" id="procalcitonin" step="0.01" required min="0" max="100">
+                        <span class="hint">Normal: &lt;0.5 ng/mL</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="submitBtn">🔍 Analyze Pneumonia Risk</button>
+            </form>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Analyzing patient data...</p>
+            </div>
+        </div>
+        <div class="result-card" id="resultCard">
+            <h2 style="text-align: center; margin-bottom: 30px;">Analysis Results</h2>
+            <div class="risk-meter">
+                <div class="risk-circle">
+                    <div class="risk-circle-inner">
+                        <div class="risk-percentage" id="riskPercentage">0%</div>
+                        <div style="font-size: 0.9rem; color: #64748b;">Risk Level</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-details">
+                <div class="detail-box">
+                    <h3>Risk Classification</h3>
+                    <p id="riskLevel">-</p>
+                </div>
+                <div class="detail-box">
+                    <h3>Confidence Level</h3>
+                    <p id="confidence">-</p>
+                </div>
+            </div>
+            <div class="advice-box">
+                <h3>Medical Recommendation</h3>
+                <p id="advice">-</p>
+            </div>
+            <button class="btn-submit" onclick="resetForm()" style="margin-top: 30px;">🔄 New Analysis</button>
+        </div>
+        <div class="footer">
+            <p>⚕️ For screening purposes only. Consult a healthcare professional for diagnosis.</p>
+        </div>
+    </div>
+    <script>
+        const form = document.getElementById('predictionForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                age: document.getElementById('age').value,
+                fever: document.getElementById('fever').value,
+                cough: document.getElementById('cough').value,
+                shortness_of_breath: document.getElementById('shortness_of_breath').value,
+                heart_rate: document.getElementById('heart_rate').value,
+                respiratory_rate: document.getElementById('respiratory_rate').value,
+                spo2: document.getElementById('spo2').value,
+                wbc: document.getElementById('wbc').value,
+                crp: document.getElementById('crp').value,
+                procalcitonin: document.getElementById('procalcitonin').value
+            };
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultCard').style.display = 'none';
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+        function displayResults(data) {
+            const colors = {'success': '#10b981', 'info': '#3b82f6', 'warning': '#f59e0b', 'danger': '#ef4444'};
+            const color = colors[data.color];
+            document.documentElement.style.setProperty('--risk-percent', data.risk_probability);
+            document.documentElement.style.setProperty('--meter-color', color);
+            document.getElementById('riskPercentage').textContent = data.risk_probability + '%';
+            document.getElementById('riskLevel').textContent = data.risk_level;
+            document.getElementById('confidence').textContent = data.confidence;
+            document.getElementById('advice').innerHTML = data.advice;  // ← CHANGED FROM textContent TO innerHTML
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetForm() {
+            form.reset();
+            document.getElementById('resultCard').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
